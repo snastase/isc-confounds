@@ -1,2 +1,2 @@
-# isc-confounds
+# Confound regression models for ISC analysis
 Confound regression models for ISC analysis
