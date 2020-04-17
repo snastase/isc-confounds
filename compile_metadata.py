@@ -1,4 +1,4 @@
-from os.path import exists, join, split
+from os.path import join
 from glob import glob
 import json
 from natsort import natsorted
@@ -50,6 +50,7 @@ for subject in subjects:
 with open(join(base_dir, 'subject_meta.json'), 'w') as f:
     json.dump(subject_meta, f, indent=2, sort_keys=True)
 
+
 # Compile task list from BIDS data
 tasks = []
 for subject in subject_meta:
@@ -59,13 +60,13 @@ for subject in subject_meta:
             tasks.append(task)
 
 tasks = natsorted(tasks)
-    
+
 # Create a dictionary of filenames keyed to tasks for convenience
 task_meta = {}
 for task in tasks:
     task_meta[task] = {}
     for subject in subject_meta:
-        
+
         # Check that subject received task and setup dictionary
         has_task = False
         for confound_fn in subject_meta[subject]['confounds']:
@@ -73,7 +74,7 @@ for task in tasks:
                 task_meta[task][subject] = {'bold': {},
                                             'confounds': []}
                 has_task = True
-        
+
         # Ugly redundant loop but c'est la vie!
         if has_task:
             for confound_fn in subject_meta[subject]['confounds']:
@@ -86,11 +87,11 @@ for task in tasks:
                     if f"task-{task}_" in bold_fn:
                         task_meta[task][subject]['bold'][space].append(
                             bold_fn)
-                        
-# Save the subject metadata dictionary
+
+# Save the task metadata dictionary
 with open(join(base_dir, 'task_meta.json'), 'w') as f:
     json.dump(task_meta, f, indent=2, sort_keys=True)
-            
+
 # Get some summary number of runs
 n_scans = sum([len(subject_meta[s]['confounds'])
                for s in subject_meta])
@@ -103,5 +104,5 @@ for task in task_meta:
             len(task_meta[task][subject]['confounds']))
 n_scans_task = sum(n_scans_task)
 
-assert n_scans = n_scans_task
+assert n_scans == n_scans_task
 print(f"Total number of scans: {n_scans}")
