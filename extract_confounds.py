@@ -1,12 +1,8 @@
-from os.path import basename, join, splitext
+from os.path import basename, exists, join, splitext
+from os import makedirs
 import json
 import pandas as pd
 from natsort import natsorted
-
-base_dir = '/jukebox/hasson/snastase/isc-confounds'
-data_dir = '/jukebox/hasson/snastase/narratives/derivatives/fmriprep'
-confounds_fn = join(data_dir, 'sub-001', 'func',
-                    'sub-001_task-pieman_run-1_desc-confounds_regressors.tsv') 
 
 
 # Function for extracting aCompCor components
@@ -52,7 +48,7 @@ def extract_compcor(confounds_df, confounds_meta,
     # Either get top n components
     if n_comps >= 1.0:
         n_comps = int(n_comps)
-        if len(comp_sorted) > n_comps:
+        if len(comp_sorted) >= n_comps:
             comp_selector = comp_sorted[:n_comps]
         else:
             comp_selector = comp_sorted
@@ -77,6 +73,24 @@ def extract_compcor(confounds_df, confounds_meta,
     return confounds_compcor
 
 
+# Function for extracting group of (variable number) confounds
+def extract_group(confounds_df, groups):
+    
+    # Expect list, so change if string
+    if type(groups) == str:
+        groups = [groups]
+    
+    # Filter for all columns with label
+    confounds_group = []
+    for group in groups:
+        group_cols = [col for col in confounds_df.columns
+                      if group in col]
+        confounds_group.append(confounds_df[group_cols])
+    confounds_group = pd.concat(confounds_group, axis=1)
+    
+    return confounds_group
+
+
 # Function for loading in confounds files
 def load_confounds(input_fn):
 
@@ -90,28 +104,96 @@ def load_confounds(input_fn):
     return confounds_df, confounds_meta
 
 
-# Function for saving confounds for AFNI 3dTproject (-ort)
-def save_confounds(output_fn, confounds):
-    confounds.to_csv(output_fn, sep='\t',
-                     header=False, index=False)
-
-
 # Function for extracting confounds (including CompCor)
-def extract_confounds(confounds_df, confounds_meta, confound_labels,
-                      acompcor_kws=None, tcompcor_kws=None):
+def extract_confounds(confounds_df, confounds_meta, model_spec):
 
-    # Check that the specified confounds are in the dataframe
-    for label in confound_labels:
-        if label not in confounds_df:
-            raise AssertionError(f"Confound {label} was "
-                                 "not found")
+    # Pop out confound groups of variable number
+    groups = set(model_spec['confounds']).intersection(
+                    ['cosine', 'motion_outlier'])
 
     # Grab the requested confounds
-    confounds = confounds_df[confounds]
+    confounds = confounds_df[[c for c in model_spec['confounds']
+                              if c not in groups]]
+    
+    # Grab confound groups if present
+    if groups:
+        confounds_group = extract_group(confounds_df,
+                                        groups)
+        confounds = pd.concat([confounds, confounds_group],
+                              axis=1)
+
+    # Get aCompCor / tCompCor confounds if requested
+    compcors = set(model_spec).intersection(
+                    ['aCompCor', 'tCompCor'])
+    if compcors:
+        for compcor in compcors:
+            if type(model_spec[compcor]) == dict:
+                model_spec[compcor] = [model_spec[compcor]]
+
+            for compcor_kws in model_spec[compcor]:
+                confounds_compcor = extract_compcor(
+                    confounds_df,
+                    confounds_meta,
+                    method=compcor,
+                    **compcor_kws)
+
+                confounds = pd.concat([confounds,
+                                       confounds_compcor],
+                                      axis=1)
 
     return confounds
 
 
-# Name guard for when we actually want to split all data
+# Name guard for when we want to grab all confounds
 if __name__ == '__main__':
-    pass
+
+    base_dir = '/jukebox/hasson/snastase/isc-confounds'
+    afni_dir = join(base_dir, 'afni')
+    tasks = ['pieman']
+    subjects = ['sub-001', 'sub-002']
+    models = ['X']
+
+    with open(join(base_dir, 'task_meta.json')) as f:
+        task_meta = json.load(f)
+
+    with open(join(base_dir, 'model_meta.json')) as f:
+        model_meta = json.load(f)    
+
+    # Loop through tasks and subjects and grab confound files
+    for task in tasks:
+        for subject in subjects:
+
+            # Make directory if it doesn't exist
+            ort_dir = join(afni_dir, subject, 'func')
+            if not exists(ort_dir):
+                makedirs(ort_dir)
+
+            # Just grab first run if multiple
+            confounds_fn = natsorted(
+                task_meta[task][subject]['confounds'])[0]
+            confounds_df, confounds_meta = load_confounds(confounds_fn)
+
+            # Loop through requested models
+            for model in models:
+
+                # Extract confounds based on model spec
+                confounds = extract_confounds(confounds_df,
+                                              confounds_meta,
+                                              model_meta[model])
+                with pd.option_context('display.max_columns', None):
+                    display(confounds)
+
+                # Create output 1D file for AFNI and save
+                ort_1d = splitext(basename(confounds_fn).replace(
+                    'desc-confounds',
+                    f'desc-model{model}'))[0] + '.1D'
+                ort_fn = join(ort_dir, ort_1d)
+                confounds.to_csv(ort_fn, sep='\t', header=False,
+                                 index=False)
+
+                # Also create CSVs with headers for convenience
+                ort_csv = splitext(basename(confounds_fn).replace(
+                    'desc-confounds',
+                    f'desc-model{model}'))[0] + '.csv'
+                ort_fn = join(ort_dir, ort_csv)
+                confounds.to_csv(ort_fn, sep=',', index=False)
