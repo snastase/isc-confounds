@@ -150,18 +150,18 @@ if __name__ == '__main__':
     base_dir = '/jukebox/hasson/snastase/isc-confounds'
     afni_dir = join(base_dir, 'afni')
     tasks = ['pieman']
-    subjects = ['sub-001', 'sub-002']
-    models = ['X']
+    #subjects = ['sub-001', 'sub-002']
+    models = ['1', '2', '3', 'X']
 
     with open(join(base_dir, 'task_meta.json')) as f:
         task_meta = json.load(f)
 
     with open(join(base_dir, 'model_meta.json')) as f:
-        model_meta = json.load(f)    
+        model_meta = json.load(f)
 
     # Loop through tasks and subjects and grab confound files
     for task in tasks:
-        for subject in subjects:
+        for subject in task_meta[task]:
 
             # Make directory if it doesn't exist
             ort_dir = join(afni_dir, subject, 'func')
@@ -169,31 +169,34 @@ if __name__ == '__main__':
                 makedirs(ort_dir)
 
             # Just grab first run if multiple
-            confounds_fn = natsorted(
-                task_meta[task][subject]['confounds'])[0]
-            confounds_df, confounds_meta = load_confounds(confounds_fn)
+            confounds_fns = natsorted(
+                task_meta[task][subject]['confounds'])
 
-            # Loop through requested models
-            for model in models:
+            # Loop through confound files (in case of multiple runs)
+            for confounds_fn in confounds_fns:
+                confounds_df, confounds_meta = load_confounds(confounds_fn)
 
-                # Extract confounds based on model spec
-                confounds = extract_confounds(confounds_df,
-                                              confounds_meta,
-                                              model_meta[model])
-                with pd.option_context('display.max_columns', None):
-                    display(confounds)
+                # Loop through requested models
+                for model in models:
 
-                # Create output 1D file for AFNI and save
-                ort_1d = splitext(basename(confounds_fn).replace(
-                    'desc-confounds',
-                    f'desc-model{model}'))[0] + '.1D'
-                ort_fn = join(ort_dir, ort_1d)
-                confounds.to_csv(ort_fn, sep='\t', header=False,
-                                 index=False)
+                    # Extract confounds based on model spec
+                    confounds = extract_confounds(confounds_df,
+                                                  confounds_meta,
+                                                  model_meta[model])
 
-                # Also create CSVs with headers for convenience
-                ort_csv = splitext(basename(confounds_fn).replace(
-                    'desc-confounds',
-                    f'desc-model{model}'))[0] + '.csv'
-                ort_fn = join(ort_dir, ort_csv)
-                confounds.to_csv(ort_fn, sep=',', index=False)
+                    # Create output 1D file for AFNI and save
+                    ort_1d = splitext(basename(confounds_fn).replace(
+                        'desc-confounds',
+                        f'desc-model{model}'))[0] + '.1D'
+                    ort_fn = join(ort_dir, ort_1d)
+                    confounds.to_csv(ort_fn, sep='\t', header=False,
+                                     index=False)
+
+                    # Also create CSVs with headers for convenience
+                    ort_csv = splitext(basename(confounds_fn).replace(
+                        'desc-confounds',
+                        f'desc-model{model}'))[0] + '.csv'
+                    ort_fn = join(ort_dir, ort_csv)
+                    confounds.to_csv(ort_fn, sep=',', index=False)
+
+                print(f"Assembled confound models for {subject} ({task})")
