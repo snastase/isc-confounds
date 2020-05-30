@@ -92,7 +92,7 @@ def extract_group(confounds_df, groups):
 
 
 # Function for loading in confounds files
-def load_confounds(input_fn):
+def load_confounds(confounds_fn):
 
     # Load the confounds TSV files
     confounds_df = pd.read_csv(confounds_fn, sep='\t')
@@ -149,15 +149,16 @@ if __name__ == '__main__':
 
     base_dir = '/jukebox/hasson/snastase/isc-confounds'
     afni_dir = join(base_dir, 'afni')
-    tasks = ['pieman']
-    #subjects = ['sub-001', 'sub-002']
-    models = ['1', '2', '3', 'X']
-
+    tasks = ['pieman', 'prettymouth', 'milkyway',
+             'slumlordreach', 'notthefallintact',
+             'black', 'forgot']
+    
     with open(join(base_dir, 'task_meta.json')) as f:
         task_meta = json.load(f)
 
     with open(join(base_dir, 'model_meta.json')) as f:
         model_meta = json.load(f)
+    models = model_meta.keys()
 
     # Loop through tasks and subjects and grab confound files
     for task in tasks:
@@ -168,7 +169,7 @@ if __name__ == '__main__':
             if not exists(ort_dir):
                 makedirs(ort_dir)
 
-            # Just grab first run if multiple
+            # Grab confound files for multiple runs if present
             confounds_fns = natsorted(
                 task_meta[task][subject]['confounds'])
 
