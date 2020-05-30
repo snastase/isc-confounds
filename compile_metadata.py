@@ -2,11 +2,13 @@ from os.path import join
 from glob import glob
 import json
 from natsort import natsorted
+import pandas as pd
 
 
 base_dir = '/jukebox/hasson/snastase/isc-confounds'
-preproc_dir = '/jukebox/hasson/snastase/narratives/derivatives/fmriprep'
-afni_dir = '/jukebox/hasson/snastase/narratives/derivatives/afni'
+narratives_dir = '/jukebox/hasson/snastase/narratives'
+preproc_dir = join(narratives_dir, 'derivatives', 'fmriprep')
+afni_dir = join(narratives_dir, 'derivatives', 'afni')
 
 
 # Get our subject list from the BIDS directory
@@ -104,8 +106,70 @@ for task in tasks:
                                 desc].append(bold_fn)
 
 # Save the task metadata dictionary
+with open(join(base_dir, 'task_meta_all.json'), 'w') as f:
+    json.dump(task_meta, f, indent=2, sort_keys=True)
+    
+
+# Set up some subjects to exclude a priori due to
+# e.g. mismatching TRs, poor behavior, noncompliance
+task_exclude = {'pieman': [],
+                'prettymouth': ['sub-038', 'sub-105'],
+                'milkyway': ['subj-105', 'sub-123', 'sub-038'],
+                'slumlordreach': ['sub-139'],
+                'notthefallintact': [],
+                'black': [],
+                'forgot': []}
+
+with open(join(base_dir, 'task_exclude.json'), 'w') as f:
+    json.dump(task_exclude, f, indent=2, sort_keys=True)
+
+
+# Filter for the tasks / conditions we care about
+tasks = ['pieman', 'prettymouth', 'milkyway', 'slumlordreach',
+         'notthefallintact', 'black', 'forgot']
+participants_fn = join(narratives_dir, 'participants.tsv')
+df = pd.read_csv(participants_fn, sep='\t')
+
+all_tasks = list(task_meta.keys())
+
+for task in all_tasks:
+    
+    if task not in tasks:
+        del task_meta[task]
+        continue
+    
+    if task == 'prettymouth':
+        keep_ids = df['participant_id'][(df['task'].str.contains('prettymouth')) &
+                                        (df['condition'].str.contains('affair'))]
+    elif task == 'milkyway':
+        keep_ids = df['participant_id'][(df['task'].str.contains('milkyway')) &
+                                      (df['condition'].str.contains('original'))]
+    else:
+        keep_ids = task_meta[task].keys()
+    keep_ids = list(keep_ids)
+    
+    participants = list(task_meta[task].keys())
+    for p in participants:
+        if p not in keep_ids:
+            del task_meta[task][p]
+
+# Save the filtered task metadata for confound models
 with open(join(base_dir, 'task_meta.json'), 'w') as f:
     json.dump(task_meta, f, indent=2, sort_keys=True)
+
+
+# Compile TRs to trim per task prior to ISC
+task_trims = {'pieman': {'start': 10, 'end': 8},
+              'prettymouth': {'start': 14, 'end': 10},
+              'milkyway': {'start': 14, 'end': 10},
+              'slumlordreach': {'start': 20, 'end': 8},
+              'notthefallintact': {'start': 2, 'end': 8},
+              'black': {'start': 8, 'end': 8},
+              'forgot': {'start': 8, 'end': 8}}
+
+with open(join(base_dir, 'task_trims.json'), 'w') as f:
+    json.dump(task_trims, f, indent=2, sort_keys=True)
+
 
 # Get some summary number of runs
 n_scans = sum([len(subject_meta[s]['confounds'])
