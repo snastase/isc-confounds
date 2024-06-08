@@ -3,6 +3,7 @@ afni/*
 !afni/tpl-fsaverage6
 /results
 /figures
+/archive
 .ipynb_checkpoints
 __pycache__
 *-bkp*
