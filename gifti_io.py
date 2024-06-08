@@ -18,3 +18,14 @@ def write_gifti(data, output_fn, template_fn):
     gda = nib.gifti.GiftiDataArray(data)
     gii.add_gifti_data_array(gda)
     nib.gifti.giftiio.write(gii, output_fn)
+
+
+# Function to write GIfTI output with new nibabel
+def write_gifti_new(data, output_fn, template_fn):
+    gii = nib.load(template_fn)
+    for i in np.arange(gii.numDA):
+        gii.remove_gifti_data_array(0)
+    gda = nib.gifti.GiftiDataArray(data)
+    gii.add_gifti_data_array(gda)
+    # nib.gifti.write(gii, output_fn)
+    gii.to_filename(output_fn)
