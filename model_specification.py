@@ -112,20 +112,22 @@ model_meta = {'0': {'confounds': []},
                       'cosine']},
               '11': {'confounds':
                       ['cosine'],
-                     'tCompCor':
+                     't_comp_cor':
                      {'n_comps': 6}},
               '12': {'confounds':
                       ['cosine'],
-                     'aCompCor':
-                     [{'n_comps': 5, 'tissue': 'CSF'},
-                      {'n_comps': 5, 'tissue': 'WM'}]},
+                     'c_comp_cor':
+                     {'n_comps': 5},
+                     'w_comp_cor':
+                     {'n_comps': 5}},
               '13': {'confounds':
                      ['trans_x', 'trans_y', 'trans_z',
                       'rot_x', 'rot_y', 'rot_z',
                       'cosine'],
-                     'aCompCor':
-                     [{'n_comps': 5, 'tissue': 'CSF'},
-                      {'n_comps': 5, 'tissue': 'WM'}]},
+                     'c_comp_cor':
+                     {'n_comps': 5},
+                     'w_comp_cor':
+                     {'n_comps': 5}},
               '14': {'confounds':
                      ['trans_x', 'trans_y', 'trans_z',
                       'rot_x', 'rot_y', 'rot_z',
@@ -136,9 +138,10 @@ model_meta = {'0': {'confounds': []},
                       'rot_y_derivative1',
                       'rot_z_derivative1',
                       'cosine'],
-                     'aCompCor':
-                     [{'n_comps': 5, 'tissue': 'CSF'},
-                      {'n_comps': 5, 'tissue': 'WM'}]},
+                     'c_comp_cor':
+                     {'n_comps': 5},
+                     'w_comp_cor':
+                     {'n_comps': 5}},
               '15': {'confounds':
                      ['trans_x', 'trans_y', 'trans_z',
                       'rot_x', 'rot_y', 'rot_z',
@@ -158,9 +161,10 @@ model_meta = {'0': {'confounds': []},
                       'rot_y_derivative1_power2',
                       'rot_z_derivative1_power2',
                       'cosine'],
-                     'aCompCor':
-                     [{'n_comps': 5, 'tissue': 'CSF'},
-                      {'n_comps': 5, 'tissue': 'WM'}]},
+                     'c_comp_cor':
+                     {'n_comps': 5},
+                     'w_comp_cor':
+                     {'n_comps': 5}},
               '16': {'confounds':
                      ['trans_x', 'trans_y', 'trans_z',
                       'rot_x', 'rot_y', 'rot_z',
@@ -183,17 +187,19 @@ model_meta = {'0': {'confounds': []},
                       'global_signal_power2',
                       'global_signal_derivative1_power2',
                       'cosine'],
-                     'aCompCor':
-                     [{'n_comps': 5, 'tissue': 'CSF'},
-                      {'n_comps': 5, 'tissue': 'WM'}]},
+                     'c_comp_cor':
+                     {'n_comps': 5},
+                     'w_comp_cor':
+                     {'n_comps': 5}},
               '17': {'confounds':
                      ['trans_x', 'trans_y', 'trans_z',
                       'rot_x', 'rot_y', 'rot_z',
                       'framewise_displacement',
                       'cosine'],
-                     'aCompCor':
-                     [{'n_comps': 5, 'tissue': 'CSF'},
-                      {'n_comps': 5, 'tissue': 'WM'}]},
+                     'c_comp_cor':
+                     {'n_comps': 5},
+                     'w_comp_cor':
+                     {'n_comps': 5}},
               '18': {'confounds':
                      ['trans_x', 'trans_y', 'trans_z',
                       'rot_x', 'rot_y', 'rot_z',
@@ -205,9 +211,10 @@ model_meta = {'0': {'confounds': []},
                       'rot_z_derivative1',
                       'framewise_displacement',
                       'cosine'],
-                     'aCompCor':
-                     [{'n_comps': 5, 'tissue': 'CSF'},
-                      {'n_comps': 5, 'tissue': 'WM'}]},
+                     'c_comp_cor':
+                     {'n_comps': 5},
+                     'w_comp_cor':
+                     {'n_comps': 5}},
               '19': {'confounds':
                      ['trans_x', 'trans_y', 'trans_z',
                       'rot_x', 'rot_y', 'rot_z',
