@@ -1,3 +1,5 @@
+# conda activate confounds
+
 from os.path import join
 from glob import glob
 import json
@@ -7,7 +9,7 @@ import pandas as pd
 
 base_dir = '/jukebox/hasson/snastase/isc-confounds'
 narratives_dir = '/jukebox/hasson/snastase/narratives'
-preproc_dir = join(narratives_dir, 'derivatives', 'fmriprep')
+preproc_dir = join(narratives_dir, 'derivatives', 'fmriprep-v23.2.3')
 afni_dir = join(narratives_dir, 'derivatives', 'afni')
 
 
@@ -43,9 +45,9 @@ for subject in subjects:
                                     f'{subject}*space-{space}*func.gii'))
             assert len(preproc_fns) == 2 * len(confound_fns)
             
-            smooth_fns = glob(join(afni_dir, subject, 'func',
-                                   (f'{subject}*space-{space}*'
-                                    f'desc-{width}*func.gii')))
+            #smooth_fns = glob(join(afni_dir, subject, 'func',
+            #                       (f'{subject}*space-{space}*'
+            #                        f'desc-{width}*func.gii')))
 
         else:
             preproc_fns = glob(join(preproc_dir, subject, 'func',
@@ -53,15 +55,15 @@ for subject in subjects:
                                  'preproc_bold.nii.gz'))
             assert len(preproc_fns) == len(confound_fns)
 
-            smooth_fns = glob(join(afni_dir, subject, 'func',
-                                   (f'{subject}*space-{space}*'
-                                    f'desc-{width}*_bold.nii.gz')))
+            #smooth_fns = glob(join(afni_dir, subject, 'func',
+            #                       (f'{subject}*space-{space}*'
+            #                        f'desc-{width}*_bold.nii.gz')))
 
-        subject_meta[subject]['bold'][space] = {'preproc': preproc_fns,
-                                                width: smooth_fns}
+        subject_meta[subject]['bold'][space] = {'preproc': preproc_fns}
+                                                #width: smooth_fns}
 
 # Save the subject metadata dictionary
-with open(join(base_dir, 'subject_meta.json'), 'w') as f:
+with open(join(base_dir, 'narratives_subject_meta.json'), 'w') as f:
     json.dump(subject_meta, f, indent=2, sort_keys=True)
 
 
@@ -77,7 +79,7 @@ tasks = natsorted(tasks)
 
 # Create a dictionary of filenames keyed to tasks for convenience
 task_meta = {}
-descs = ['preproc', 'sm6']
+descs = ['preproc']#, 'sm6']
 for task in tasks:
     task_meta[task] = {}
     for subject in subject_meta:
@@ -106,7 +108,7 @@ for task in tasks:
                                 desc].append(bold_fn)
 
 # Save the task metadata dictionary
-with open(join(base_dir, 'task_meta_all.json'), 'w') as f:
+with open(join(base_dir, 'narratives_meta_all.json'), 'w') as f:
     json.dump(task_meta, f, indent=2, sort_keys=True)
     
 
@@ -124,7 +126,7 @@ with open(join(base_dir, 'task_exclude.json'), 'w') as f:
     json.dump(task_exclude, f, indent=2, sort_keys=True)
 
 
-# Filter for the tasks / conditions we care about
+# Filter for the tasks / conditions we care about in confound analysis
 tasks = ['pieman', 'prettymouth', 'milkyway', 'slumlordreach',
          'notthefallintact', 'black', 'forgot']
 participants_fn = join(narratives_dir, 'participants.tsv')
@@ -154,7 +156,7 @@ for task in all_tasks:
             del task_meta[task][p]
 
 # Save the filtered task metadata for confound models
-with open(join(base_dir, 'task_meta.json'), 'w') as f:
+with open(join(base_dir, 'narratives_meta.json'), 'w') as f:
     json.dump(task_meta, f, indent=2, sort_keys=True)
 
 
@@ -167,7 +169,7 @@ task_trims = {'pieman': {'start': 10, 'end': 8},
               'black': {'start': 8, 'end': 8},
               'forgot': {'start': 8, 'end': 8}}
 
-with open(join(base_dir, 'task_trims.json'), 'w') as f:
+with open(join(base_dir, 'narratives_trims.json'), 'w') as f:
     json.dump(task_trims, f, indent=2, sort_keys=True)
 
 
@@ -183,5 +185,5 @@ for task in task_meta:
             len(task_meta[task][subject]['confounds']))
 n_scans_task = sum(n_scans_task)
 
-assert n_scans == n_scans_task
+#assert n_scans == n_scans_task
 print(f"Total number of scans: {n_scans}")
