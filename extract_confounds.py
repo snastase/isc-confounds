@@ -1,3 +1,5 @@
+# conda activate confounds
+
 from os.path import basename, exists, join, splitext
 from os import makedirs
 import json
@@ -7,35 +9,19 @@ from natsort import natsorted
 
 # Function for extracting aCompCor components
 def extract_compcor(confounds_df, confounds_meta,
-                    n_comps=5, method='tCompCor',
+                    n_comps=5, method='t_comp_cor',
                     tissue=None):
 
     # Check that we sensible number of components
     assert n_comps > 0
 
     # Check that method is specified correctly
-    assert method in ['aCompCor', 'tCompCor']
-
-    # Check that tissue is specified for aCompCor
-    if method == 'aCompCor' and tissue not in ['combined', 'CSF', 'WM']:
-        raise AssertionError("Must specify a tissue type "
-                             "(combined, CSF, or WM) for aCompCor")
-
-    # Ignore tissue if specified for tCompCor
-    if method == 'tCompCor' and tissue:
-        print("Warning: tCompCor is not restricted to a tissue "
-              f"mask - ignoring tissue specification ({tissue})")
-        tissue = None
+    assert method in ['a_comp_cor', 't_comp_cor',
+                      'c_comp_cor', 'w_comp_cor']
 
     # Get CompCor metadata for relevant method
     compcor_meta = {c: confounds_meta[c] for c in confounds_meta
-                    if confounds_meta[c]['Method'] == method
-                    and confounds_meta[c]['Retained']}
-
-    # If aCompCor, filter metadata for tissue mask
-    if method == 'aCompCor':
-        compcor_meta = {c: compcor_meta[c] for c in compcor_meta
-                        if compcor_meta[c]['Mask'] == tissue}
+                    if method in c and confounds_meta[c]['Retained']}
 
     # Make sure metadata components are sorted properly
     comp_sorted = natsorted(compcor_meta)
@@ -124,7 +110,8 @@ def extract_confounds(confounds_df, confounds_meta, model_spec):
 
     # Get aCompCor / tCompCor confounds if requested
     compcors = set(model_spec).intersection(
-                    ['aCompCor', 'tCompCor'])
+                    ['a_comp_cor', 't_comp_cor',
+                     'c_comp_cor', 'w_comp_cor'])
     if compcors:
         for compcor in compcors:
             if type(model_spec[compcor]) == dict:
@@ -149,11 +136,14 @@ if __name__ == '__main__':
 
     base_dir = '/jukebox/hasson/snastase/isc-confounds'
     afni_dir = join(base_dir, 'afni')
-    tasks = ['pieman', 'prettymouth', 'milkyway',
-             'slumlordreach', 'notthefallintact',
-             'black', 'forgot']
-    
-    with open(join(base_dir, 'task_meta.json')) as f:
+    tasks = ['budapest', 'life', 'raiders']
+    #tasks = ['pieman', 'prettymouth', 'milkyway',
+    #         'slumlordreach', 'notthefallintact',
+    #         'black', 'forgot']
+
+    task_json = join(base_dir, 'movies_meta.json')
+    #task_json = join(base_dir, 'narratives_meta.json')
+    with open(task_json) as f:
         task_meta = json.load(f)
 
     with open(join(base_dir, 'model_meta.json')) as f:
@@ -165,7 +155,7 @@ if __name__ == '__main__':
         for subject in task_meta[task]:
 
             # Make directory if it doesn't exist
-            ort_dir = join(afni_dir, subject, 'func')
+            ort_dir = join(afni_dir, task, subject)
             if not exists(ort_dir):
                 makedirs(ort_dir)
 
@@ -189,6 +179,10 @@ if __name__ == '__main__':
                     ort_1d = splitext(basename(confounds_fn).replace(
                         'desc-confounds',
                         f'desc-model{model}'))[0] + '.1D'
+
+                    if task in ['budapest', 'raiders']:
+                        ort_1d = ort_1d.replace('task-movie', f'task-{task}')
+                    
                     ort_fn = join(ort_dir, ort_1d)
                     confounds.to_csv(ort_fn, sep='\t', header=False,
                                      index=False)
