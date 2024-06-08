@@ -4,6 +4,7 @@ afni/*
 /results
 /figures
 /archive
+*.json
 .ipynb_checkpoints
 __pycache__
 *-bkp*

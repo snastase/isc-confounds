@@ -108,3 +108,4 @@ assert len(iscs) == len(mean_fds)
 r, p = pearsonr(iscs, mean_fds)
 print(f"Correlation between {task} FD and ISC = {r:.3f} (p = {p:.3f}) ")
 sns.regplot(mean_fds, iscs)
+
