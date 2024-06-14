@@ -136,13 +136,13 @@ if __name__ == '__main__':
 
     base_dir = '/jukebox/hasson/snastase/isc-confounds'
     afni_dir = join(base_dir, 'afni')
-    tasks = ['budapest', 'life', 'raiders']
-    #tasks = ['pieman', 'prettymouth', 'milkyway',
-    #         'slumlordreach', 'notthefallintact',
-    #         'black', 'forgot']
+    #tasks = ['budapest', 'life', 'raiders']
+    tasks = ['pieman', 'prettymouth', 'milkyway',
+             'slumlordreach', 'notthefallintact',
+             'black', 'forgot']
 
-    task_json = join(base_dir, 'movies_meta.json')
-    #task_json = join(base_dir, 'narratives_meta.json')
+    #task_json = join(base_dir, 'movies_meta.json')
+    task_json = join(base_dir, 'narratives_meta.json')
     with open(task_json) as f:
         task_meta = json.load(f)
 

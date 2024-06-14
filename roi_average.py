@@ -8,15 +8,15 @@ from glob import glob
 from gifti_io import read_gifti
 
 space = 'fsaverage6'
-roi = 'MT+' # EAC, IFG, V1, MT+
+roi = 'EAC' # EAC, IFG, V1, MT+
 
 # Assign some directories
 base_dir = '/jukebox/hasson/snastase/isc-confounds'
 tpl_dir = join(base_dir, 'afni', f'tpl-{space}')
 
 # Pick stimulus type, either narratives or movies
-#task_json = join(base_dir, 'narratives_meta.json')
-task_json = join(base_dir, 'movies_meta.json')
+task_json = join(base_dir, 'narratives_meta.json')
+#task_json = join(base_dir, 'movies_meta.json')
 
 # Get metadata for all subjects for a given task
 with open(task_json) as f:
@@ -52,7 +52,7 @@ for hemi in ['L', 'R']:
                 
                 roi_1D = join(base_dir, 'afni', task, subject,
                               basename(bold_fn).replace(
-                                  '_bold.func.gii', f'_roi-{roi}_timeseries.1D'))
+                                  '_bold.func.gii', f'_parc-{roi}_timeseries.1D'))
                 np.savetxt(roi_1D, roi_avg[None, :], delimiter=' ', fmt='%f')
 
                 print(f"Extracted average {roi} time series for {subject} ({task})"

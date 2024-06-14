@@ -23,7 +23,8 @@ base_dir = '/jukebox/hasson/snastase/isc-confounds'
 # Set stimulus type and ROI
 #task_json = join(base_dir, 'narratives_meta.json')
 task_json = join(base_dir, 'movies_meta.json')
-roi_avg = 'MT+'
+#parc_avg = 'MT+' # V1 MT+ EAC IFG
+parc_avg = 'Schaefer1000'
 
 # Get metadata for all subjects for a given task
 with open(task_json) as f:
@@ -59,10 +60,10 @@ for task in tasks:
             chdir(confounds_dir)
 
             # Get input BOLD data
-            if roi_avg:
+            if parc_avg:
                 bold_fns = natsorted(glob(join(confounds_dir,
                                (f'{subject}*task-{task}_*_space-{space}_'
-                                f'roi-{roi_avg}_timeseries.1D'))))
+                                f'parc-{parc_avg}_timeseries.1D'))))
                 assert len(bold_fns) > 0
 
             #elif 'fsaverage' in space:
@@ -78,11 +79,11 @@ for task in tasks:
             for bold_fn in bold_fns:
 
                 # Assign regression output filename (i.e. residuals)
-                if roi_avg:
+                if parc_avg:
                     reg_fn = join(confounds_dir,
                                   basename(bold_fn).replace(
-                                      f'roi-{roi_avg}',
-                                      f'roi-{roi_avg}_desc-model{model}'))
+                                      f'parc-{parc_avg}',
+                                      f'parc-{parc_avg}_desc-model{model}'))
                 #else:
                 #    if f'desc-{smoothness}' in bold_fn:
                 #        reg_fn = join(confounds_dir,

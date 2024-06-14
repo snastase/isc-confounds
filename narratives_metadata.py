@@ -10,19 +10,23 @@ import pandas as pd
 base_dir = '/jukebox/hasson/snastase/isc-confounds'
 narratives_dir = '/jukebox/hasson/snastase/narratives'
 preproc_dir = join(narratives_dir, 'derivatives', 'fmriprep-v23.2.3')
-afni_dir = join(narratives_dir, 'derivatives', 'afni')
+#afni_dir = join(narratives_dir, 'derivatives', 'afni')
 
 
 # Get our subject list from the BIDS directory
 n_subjects = 345
-subjects = natsorted([p.split('/')[-2] for p in
-                      glob(join(preproc_dir, 'sub-*/'))])
+#subjects = natsorted([p.split('/')[-2] for p in
+#                      glob(join(preproc_dir, 'sub-*/'))])
+subjects = natsorted([p.split('/')[-1][:7] for p in
+                      glob(join(preproc_dir, 'sub-*.html'))])
 
 # Check that we're not missing subjects
-for n, subject in zip(range(1, n_subjects + 1), subjects):
-    if subject != f"sub-{n:03}":
-        raise AssertionError("Found a mismatching subject: "
-                             f"{subject} (expected sub-{n:03})")
+for n in range(1, n_subjects + 1):
+    if f"sub-{n:03}" not in subjects:
+        #raise AssertionError("Found a mismatching subject: "
+        #                     f"{subject} (expected sub-{n:03})")
+        print("Found a missing subject: "
+              f"{n} (expected sub-{n:03})")
 
 # Create a dictionary containing filenames keyed to subjects
 spaces = ['MNI152NLin2009cAsym', 'fsaverage6']
@@ -35,7 +39,7 @@ for subject in subjects:
     # Grab confounds TSV file
     confound_fns = glob(join(preproc_dir, subject, 'func',
                              f'{subject}*desc-confounds'
-                             '_regressors.tsv'))
+                             '_timeseries.tsv'))
     subject_meta[subject]['confounds'] = confound_fns
 
     # Grab either volumetric or surface-based BOLD filenames

@@ -1,11 +1,14 @@
-from os.path import join
+# conda activate confounds, then module load connectome_wb
+
+from os.path import basename, exists, join
 import json
 import numpy as np
 import nibabel as nib
-from nilearn.maskers import NiftiLabelsMasker
+from glob import glob
+from gifti_io import read_gifti
 
 space = 'fsaverage6'
-atlas = 'Schaefer1000'
+atlas = 'Schaefer1000' # Schaefer1000 MMP
 
 # Assign some directories
 base_dir = '/jukebox/hasson/snastase/isc-confounds'
@@ -33,8 +36,10 @@ def parcel_average(data, parc, exclude_zero=True):
 
     return avg_data
 
+# Function to expand parcel-level data back onto cortical map
 def parcel_reconstruct(data, parc, n_vertices=40962,
-                       exclude_zero=True):
+                       exclude_zero=True, return_gii=False,
+                       template_gii=None):
     labels = np.unique(parc).tolist()
     if exclude_zero:
         labels.remove(0)
@@ -43,35 +48,81 @@ def parcel_reconstruct(data, parc, n_vertices=40962,
     for i, label in enumerate(labels):
         parcel_map[parc == label] = data[i]
 
+    if return_gii and template_gii:
+        gii = nib.load(template_gii)
+        for i in np.arange(gii.numDA):
+            gii.remove_gifti_data_array(0)
+        gda = nib.gifti.GiftiDataArray(parcel_map.astype('float32'))
+        gii.add_gifti_data_array(gda)
+        parcel_map = gii
+
     return parcel_map
 
 # Load in atlas
-parcs = {}
+parcs, parcs_gii = {}, {}
 for hemi in ['L', 'R']:
     atlas_fn = join(tpl_dir,
                     (f'tpl-fsaverage6_hemi-{hemi}_'
-                    f'desc-{atlas}_dseg.label.gii'))
-    parc_gii = nib.load(atlas_fn)
-    parcs[hemi] = parc_gii.agg_data()
+                     f'desc-{atlas}_dseg.label.gii'))
+    parcs_gii[hemi] = nib.load(atlas_fn)
+    parcs[hemi] = parcs_gii[hemi].agg_data()
     
 
-
+# Sanity check visualize parcellation
 from surfplot import Plot
-from neuromaps.datasets import fetch_fsaverage
 from neuromaps.datasets import fetch_fslr
-from neuromaps.transforms import mni152_to_fslr
+from neuromaps.transforms import fsaverage_to_fslr
 
-# Fetch fsLR surfaces from neuromaps
-surfaces = fetch_fslr()
-lh, rh = surfaces['inflated']
-sulc_lh, sulc_rh = surfaces['sulc']
+# Convert fsaverage6 to fslr for visualization
+parc_L = fsaverage_to_fslr(parcs_gii['L'], target_density='32k',
+                           hemi='L', method='nearest')[0]
+parc_R = fsaverage_to_fslr(parcs_gii['R'], target_density='32k',
+                           hemi='R', method='nearest')[0]
+    
+surfaces_fslr = fetch_fslr()
+surf_lh, surf_rh = surfaces_fslr['inflated']
 
-# Convert volumetric MNI data to fsLR surface
-gii_lh, gii_rh = mni152_to_fslr(parcel_img, method='nearest')
+p = Plot(surf_lh=surf_lh, 
+         surf_rh=surf_rh,
+         brightness=.7)
+p.add_layer({'left': parc_L,
+             'right': parc_R}, 
+             cmap='YlOrRd')
+fig = p.build()
 
-# Plot example ROI on surface
-p = Plot(surf_lh=lh, surf_rh=rh, brightness=.7)
-p.add_layer({'left': gii_lh, 'right': gii_rh}, cmap='Blues', color_range=(0, 1))
-cbar_kws = dict(location='right', draw_border=False, aspect=10,
-                shrink=.2, decimals=0, pad=0, n_ticks=2)
-fig = p.build(cbar_kws=cbar_kws)
+
+# Loop through subjects and extract parcel average time series
+for hemi in ['L', 'R']:
+    
+    for task in task_meta:
+        if not exists(join(base_dir, 'afni', task)):
+            mkdir(join(base_dir, 'afni', task))
+        
+        for subject in task_meta[task]:
+            if not exists(join(base_dir, 'afni', task, subject)):
+                mkdir(join(base_dir, 'afni', task, subject))
+
+            bold_fns = task_meta[task][subject]['bold'][space]['preproc']
+            bold_fns = [bold_fn for bold_fn in bold_fns
+                        if f'hemi-{hemi}' in bold_fn]
+
+            # Loop through BOLD images and extract parcel averages
+            for bold_fn in bold_fns:
+                bold_map = read_gifti(bold_fn)
+
+                parc_avg = parcel_average(bold_map.T, parcs[hemi])
+                assert bold_map.shape[0] == parc_avg.shape[0]
+
+                if task in ['budapest', 'raiders']:
+                    bold_fn = bold_fn.replace('task-movie',
+                                              f'task-{task}')
+                
+                parc_1D = join(base_dir, 'afni', task, subject,
+                              basename(bold_fn).replace(
+                                  '_bold.func.gii',
+                                  f'_parc-{atlas}_timeseries.1D'))
+                np.savetxt(parc_1D, parc_avg.T, delimiter=' ',
+                           newline='\n', fmt='%f')
+
+                print(f"Extracted average {atlas} time series for "
+                      f"{subject} ({task})\n  {basename(parc_1D)}")

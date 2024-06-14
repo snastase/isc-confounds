@@ -9,7 +9,8 @@ from scipy.stats import zscore
 from brainiak.isc import isc
 
 space = 'fsaverage6'
-roi = 'MT+'
+#parc = 'MT+' # V1 MT+ EAC IFG
+parc = 'Schaefer1000'
 hemis = ['L', 'R']
 threshold = .1
 exclusion = False
@@ -54,8 +55,8 @@ def load_1D(fn):
     with open(fn) as f:
         lines = [line.strip().split(' ') for line in f.readlines()
                  if '#' not in line]
-    assert len(lines) == 1
-    return np.array(lines[0]).astype(float)
+    #assert len(lines) == 1
+    return np.array(lines).astype(float).T
         
 
 # Compile ROIs across all subjects
@@ -83,23 +84,24 @@ for task in task_runs:
                     data_dir = join(base_dir, 'afni', task, subject)
 
                     if run:
-                        roi_fns = natsorted(glob(join(data_dir,
+                        parc_fns = natsorted(glob(join(data_dir,
                                       (f'{subject}*task-{task}_*run-{run:02d}_'
                                        f'hemi-{hemi}_space-{space}_'
-                                       f'roi-{roi}_desc-model{model}_'
+                                       f'parc-{parc}_desc-model{model}_'
                                        'timeseries.1D'))))
+                        raise
                     else:
-                        roi_fns = natsorted(glob(join(data_dir,
+                        parc_fns = natsorted(glob(join(data_dir,
                                       (f'{subject}*task-{task}_*'
                                        f'hemi-{hemi}_space-{space}_'
-                                       f'roi-{roi}_desc-model{model}_'
+                                       f'parc-{parc}_desc-model{model}_'
                                        'timeseries.1D'))))                        
 
                     # Grab only first run in case of multiple runs
-                    roi_fn = roi_fns[0]
+                    parc_fn = parc_fns[0]
 
                     # Strip comments and load in data as numpy array
-                    subj_data = load_1D(roi_fn)
+                    subj_data = load_1D(parc_fn)
 
                     # slumlordreach has ragged end-time, so trim it
                     if task == 'slumlordreach':
@@ -108,18 +110,25 @@ for task in task_runs:
 
                     data.append(zscore(subj_data))
 
-                data = np.column_stack(data)
+                # Check whether single ROI or parcellation data
+                if data[0].ndim > 1:
+                    data = np.stack(data, -1)
+                else:
+                    data = np.column_stack(data)
 
                 # Trim data
-                data = data[task_trims[task]['start']:-task_trims[task]['end'], :]
+                data = data[task_trims[task]['start']:-task_trims[task]['end']]
 
                 # Compute ISCs
-                iscs = isc(data).flatten()
+                iscs = isc(data)
+                
+                if iscs.shape[1] == 1:
+                    iscs = iscs.squeeze()
 
                 results[model] = iscs
 
                 # We may want to exclude really bad EAC ISCs on principle
-                n_threshold = np.sum(iscs < threshold)
+                #n_threshold = np.sum(iscs < threshold)
 
                 if exclusion:
                     exclude = iscs < threshold
@@ -127,17 +136,14 @@ for task in task_runs:
 
                 # Print mean and SD
                 print(f"mean {task} ISC for model {model} = {np.mean(iscs):.3f} "
-                      f"(SD = {np.std(iscs):.3f}) \n  {n_threshold} below {threshold} "
-                      f"(exclusion = {exclusion})")
+                      f"(SD = {np.std(iscs):.3f})")
 
             if run:
                 results_fn = join(base_dir, 'results',
                                   (f'results_task-{task}_run-{run:02d}_'
-                                   f'hemi-{hemi}_roi-{roi}_'
-                                   f'desc-excl0_iscs.npy'))
+                                   f'hemi-{hemi}_parc-{parc}_iscs.npy'))
             else:
                 results_fn = join(base_dir, 'results',
                                   (f'results_task-{task}_'
-                                   f'hemi-{hemi}_roi-{roi}_'
-                                   f'desc-excl0_iscs.npy'))
+                                   f'hemi-{hemi}_parc-{parc}_iscs.npy'))
             np.save(results_fn, results)
