@@ -21,10 +21,10 @@ base_dir = '/jukebox/hasson/snastase/isc-confounds'
 #deriv_dir = '/jukebox/hasson/snastase/narratives/derivatives'
 
 # Set stimulus type and ROI
-#task_json = join(base_dir, 'narratives_meta.json')
-task_json = join(base_dir, 'movies_meta.json')
-#parc_avg = 'MT+' # V1 MT+ EAC IFG
-parc_avg = 'Schaefer1000'
+task_json = join(base_dir, 'narratives_meta.json')
+#task_json = join(base_dir, 'movies_meta.json')
+parc_avg = 'IFG' # V1 MT+ EAC IFG
+#parc_avg = 'Schaefer1000'
 
 # Get metadata for all subjects for a given task
 with open(task_json) as f:
@@ -42,9 +42,9 @@ if 'fsaverage' not in space:
     assert exists(mask_fn)
     
 # Loop through tasks
-#tasks = ['pieman', 'prettymouth', 'milkyway', 'slumlordreach',
-#         'notthefallintact', 'black', 'forgot']
-tasks = ['budapest', 'life', 'raiders']
+tasks = ['pieman', 'prettymouth', 'milkyway', 'slumlordreach',
+         'notthefallintact', 'black', 'forgot']
+#tasks = ['budapest', 'life', 'raiders']
 for task in tasks:
     
     # Loop through requested models

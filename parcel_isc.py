@@ -9,8 +9,8 @@ from scipy.stats import zscore
 from brainiak.isc import isc
 
 space = 'fsaverage6'
-#parc = 'MT+' # V1 MT+ EAC IFG
-parc = 'Schaefer1000'
+parc = 'IFG' # V1 MT+ EAC IFG
+#parc = 'Schaefer1000'
 hemis = ['L', 'R']
 threshold = .1
 exclusion = False
@@ -18,21 +18,21 @@ exclusion = False
 base_dir = '/jukebox/hasson/snastase/isc-confounds'
 
 # Get metadata for all subjects for a given task
-#task_json = join(base_dir, 'narratives_meta.json')
-#trims_json = join(base_dir, 'narratives_trims.json')
-#exclude_json = join(base_dir, 'narratives_exclude.json')
-task_json = join(base_dir, 'movies_meta.json')
-trims_json = join(base_dir, 'movies_trims.json')
-exclude_json = join(base_dir, 'movies_exclude.json')
+task_json = join(base_dir, 'narratives_meta.json')
+trims_json = join(base_dir, 'narratives_trims.json')
+exclude_json = join(base_dir, 'narratives_exclude.json')
+#task_json = join(base_dir, 'movies_meta.json')
+#trims_json = join(base_dir, 'movies_trims.json')
+#exclude_json = join(base_dir, 'movies_exclude.json')
 
 # Set up for multiple runs per task
-#tasks = ['pieman', 'prettymouth', 'milkyway', 'slumlordreach',
-#         'notthefallintact', 'black', 'forgot']
-#task_runs = {t: [None] for t in tasks}
+tasks = ['pieman', 'prettymouth', 'milkyway', 'slumlordreach',
+         'notthefallintact', 'black', 'forgot']
+task_runs = {t: [None] for t in tasks}
 
-task_runs = {'budapest': [1, 2, 3, 4, 5],
-             'life': [1, 2, 3, 4],
-             'raiders': [1, 2, 3, 4]}
+#task_runs = {'budapest': [1, 2, 3, 4, 5],
+#             'life': [1, 2, 3, 4],
+#             'raiders': [1, 2, 3, 4]}
 
 with open(task_json) as f:
     task_meta = json.load(f)
@@ -98,7 +98,12 @@ for task in task_runs:
                                        'timeseries.1D'))))                        
 
                     # Grab only first run in case of multiple runs
-                    parc_fn = parc_fns[0]
+                    if len(parc_fns) == 0:
+                        print(f"Skipping subject {subject}, model {model},"
+                              f"hemisphere {hemi}, task {task}")
+                        print("Maybe too many nuisance regressors?!")
+                    else:
+                        parc_fn = parc_fns[0]
 
                     # Strip comments and load in data as numpy array
                     subj_data = load_1D(parc_fn)
@@ -135,8 +140,8 @@ for task in task_runs:
                     iscs = iscs[~exclude]
 
                 # Print mean and SD
-                print(f"mean {task} ISC for model {model} = {np.mean(iscs):.3f} "
-                      f"(SD = {np.std(iscs):.3f})")
+                print(f"mean {task} ISC for model {model} = {np.nanmean(iscs):.3f} "
+                      f"(SD = {np.nanstd(iscs):.3f})")
 
             if run:
                 results_fn = join(base_dir, 'results',

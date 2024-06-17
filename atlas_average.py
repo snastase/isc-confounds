@@ -15,8 +15,8 @@ base_dir = '/jukebox/hasson/snastase/isc-confounds'
 tpl_dir = join(base_dir, 'afni', f'tpl-{space}')
 
 # Pick stimulus type, either narratives or movies
-#task_json = join(base_dir, 'narratives_meta.json')
-task_json = join(base_dir, 'movies_meta.json')
+task_json = join(base_dir, 'narratives_meta.json')
+#task_json = join(base_dir, 'movies_meta.json')
 
 # Get metadata for all subjects for a given task
 with open(task_json) as f:

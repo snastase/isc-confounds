@@ -8,7 +8,7 @@ from glob import glob
 from gifti_io import read_gifti
 
 space = 'fsaverage6'
-roi = 'EAC' # EAC, IFG, V1, MT+
+roi = 'IFG' # EAC, IFG, V1, MT+
 
 # Assign some directories
 base_dir = '/jukebox/hasson/snastase/isc-confounds'
