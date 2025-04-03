@@ -1,6 +1,11 @@
 # Confound regression models for ISC analysis
 This repository accompanies a manuscript in preparation comparing different confound regression models for intersubject correlation analysis with naturalistic stimuli. Intersubject correlation (ISC) analysis has become a popular method for capturing synchronized, stimulus-evoked shared brain activity in naturalistic contexts ([Hasson et al., 2004](https://doi.org/10.1126/science.1089506); [Nastase et al., 2019](https://doi.org/10.1093/scan/nsz037)). Inspired by related work on resting-state functional connectivity ([Ciric et al., 2017](https://doi.org/10.1016/j.neuroimage.2017.03.020); [Parkes et al., 2018](https://doi.org/10.1016/j.neuroimage.2017.12.073)), we compared how a number of different combinations of confound variables (extracted using fMRIPrep; [Esteban et al., 2019](https://doi.org/10.1038/s41592-018-0235-4)) impact ISC estimates. We evaluate these models on $N = 754$ spoken story-listening scans from the [Narratives](https://snastase.github.io/datasets/ds002345) dataset ([Nastase et al., 2021](https://doi.org/10.1038/s41597-021-01033-3)) and $N = 291$ movie-watching scans from *The Grand Budapest Hotel* ([Visconti di Oleggio Castello et al., 2020](https://doi.org/10.1038/s41597-020-00735-4)), the *Life* nature documentary ([Nastase et al., 2017](https://doi.org/10.1093/cercor/bhx138)), and *Raiders of the Lost Ark* ([Nastase, 2018](https://www.proquest.com/openview/e78f49f73687a128fe2116ef094a23b1)).
 
+This work was presented in a poster at the annual meeting of the Organization for Human Brain Mapping (OHBM) 2024 in Seoul, South Korea: [`poster`](https://docs.google.com/presentation/d/1V2ZUN3QgV_whc2ZrVCxQ0LT-dbZ0IcjRLKz04R-UrrU/edit?usp=sharing)
+
+If you find this work helpful, please cite the following reference:
+- Nastase, S. A., & Hasson, U. (2024, June). *Confound regression models for intersubject correlation analysis with naturalistic stimuli*. Poster presented at the annual meeting of the Organization for Human Brain Mapping in Seoul, South Korea. https://github.com/snastase/isc-confounds
+
 #### Workflow
 1. Use `narratives_metadata.py` and `movies_metadata.py` to construct JSON files containing filenames and metadata for the `narratives` and `movies` datasets.
 2. Use `model_specification.py` to construct JSON specifying different confound models.
